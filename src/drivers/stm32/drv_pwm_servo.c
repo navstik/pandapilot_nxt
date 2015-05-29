@@ -168,6 +168,14 @@ pwm_channel_init(unsigned channel)
 		rCCR4(timer) = pwm_channels[channel].default_value;
 		rCCER(timer) |= GTIM_CCER_CC4E;
 		break;
+
+#ifdef	CONFIG_ARCH_BOARD_NAVSTIK
+	case 5:
+		rCCMR1(timer) |= (GTIM_CCMR_MODE_PWM1 << GTIM_CCMR1_OC1M_SHIFT) | GTIM_CCMR1_OC1PE;
+		rCCR1(timer) = pwm_channels[channel].default_value;
+		rCCER(timer) |= GTIM_CCER_CC1NE;
+		break;
+#endif
 	}
 }
 
@@ -204,6 +212,12 @@ up_pwm_servo_set(unsigned channel, servo_position_t value)
 	case 4:
 		rCCR4(timer) = value;
 		break;
+
+#ifdef	CONFIG_ARCH_BOARD_NAVSTIK
+	case 5:
+		rCCR1(timer) = value;
+		break;
+#endif
 
 	default:
 		return -1;
