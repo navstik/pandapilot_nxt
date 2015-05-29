@@ -155,8 +155,8 @@
 # endif
 #elif TONE_ALARM_TIMER == 10
 # define TONE_ALARM_BASE		STM32_TIM10_BASE
-# define TONE_ALARM_CLOCK		STM32_APB1_TIM10_CLKIN
-# define TONE_ALARM_CLOCK_ENABLE	RCC_APB1ENR_TIM10EN
+# define TONE_ALARM_CLOCK		STM32_APB2_TIM10_CLKIN
+# define TONE_ALARM_CLOCK_ENABLE	RCC_APB2ENR_TIM10EN
 # ifdef CONFIG_STM32_TIM10
 #  error Must not set CONFIG_STM32_TIM10 when TONE_ALARM_TIMER is 10
 # endif
@@ -373,8 +373,13 @@ ToneAlarm::init()
 	/* configure the GPIO to the idle state */
 	stm32_configgpio(GPIO_TONE_ALARM_IDLE);
 
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	/* clock/power on our timer */
+	modifyreg32(STM32_RCC_APB2ENR, 0, TONE_ALARM_CLOCK_ENABLE);
+#else
 	/* clock/power on our timer */
 	modifyreg32(STM32_RCC_APB1ENR, 0, TONE_ALARM_CLOCK_ENABLE);
+#endif
 
 	/* initialise the timer */
 	rCR1 = 0;
