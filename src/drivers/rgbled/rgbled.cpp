@@ -68,7 +68,12 @@
 #define RGBLED_ONTIME 120
 #define RGBLED_OFFTIME 120
 
+#ifdef NAVSTIK_I2C_BUS_LED
+#define ADDR			NAVSTIK_I2C_OBDEV_LED	/**< I2C adress of TCA62724FMG */
+#else
 #define ADDR			PX4_I2C_OBDEV_LED	/**< I2C adress of TCA62724FMG */
+#endif
+
 #define SUB_ADDR_START		0x01	/**< write everything (with auto-increment) */
 #define SUB_ADDR_PWM0		0x81	/**< blue     (without auto-increment) */
 #define SUB_ADDR_PWM1		0x82	/**< green    (without auto-increment) */
@@ -578,7 +583,11 @@ rgbled_usage()
 {
 	warnx("missing command: try 'start', 'test', 'info', 'off', 'stop', 'rgb 30 40 50'");
 	warnx("options:");
+#ifdef NAVSTIK_I2C_BUS_LED
+	warnx("    -b i2cbus (%d)", NAVSTIK_I2C_BUS_LED);
+#else
 	warnx("    -b i2cbus (%d)", PX4_I2C_BUS_LED);
+#endif
 	warnx("    -a addr (0x%x)", ADDR);
 }
 
@@ -626,6 +635,15 @@ rgbled_main(int argc, char *argv[])
 		}
 
 		if (i2cdevice == -1) {
+#ifdef NAVSTIK_I2C_BUS_LED
+			i2cdevice = NAVSTIK_I2C_BUS_LED;
+			g_rgbled = new RGBLED(NAVSTIK_I2C_BUS_LED, rgbledadr);
+
+			if (g_rgbled != nullptr && OK != g_rgbled->init()) {
+				delete g_rgbled;
+				g_rgbled = nullptr;
+			}
+#else
 			// try the external bus first
 			i2cdevice = PX4_I2C_BUS_EXPANSION;
 			g_rgbled = new RGBLED(PX4_I2C_BUS_EXPANSION, rgbledadr);
@@ -643,6 +661,7 @@ rgbled_main(int argc, char *argv[])
 				}
 				i2cdevice = PX4_I2C_BUS_LED;
 			}
+#endif
 		}
 
 		if (g_rgbled == nullptr) {
