@@ -1410,12 +1410,22 @@ struct hmc5883_bus_option {
 	uint8_t busnum;
 	HMC5883	*dev;
 } bus_options[] = {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	{ HMC5883_BUS_I2C_EXTERNAL, "/dev/hmc5883_ext", &HMC5883_I2C_interface, NAVSTIK_I2C_BUS_GPS_1, NULL },
+#ifdef NAVSTIK_I2C_BUS_SENSORS
+	{ HMC5883_BUS_I2C_INTERNAL, "/dev/hmc5883_int", &HMC5883_I2C_interface, NAVSTIK_I2C_BUS_SENSORS, NULL },
+#endif
+#ifdef NAVSTIK_SPIDEV_HMC
+	{ HMC5883_BUS_SPI, "/dev/hmc5883_spi", &HMC5883_SPI_interface, NAVSTIK_SPI_BUS_SENSORS, NULL },
+#endif
+#else
 	{ HMC5883_BUS_I2C_EXTERNAL, "/dev/hmc5883_ext", &HMC5883_I2C_interface, PX4_I2C_BUS_EXPANSION, NULL },
 #ifdef PX4_I2C_BUS_ONBOARD
 	{ HMC5883_BUS_I2C_INTERNAL, "/dev/hmc5883_int", &HMC5883_I2C_interface, PX4_I2C_BUS_ONBOARD, NULL },
 #endif
 #ifdef PX4_SPIDEV_HMC
 	{ HMC5883_BUS_SPI, "/dev/hmc5883_spi", &HMC5883_SPI_interface, PX4_SPI_BUS_SENSORS, NULL },
+#endif
 #endif
 };
 #define NUM_BUS_OPTIONS (sizeof(bus_options)/sizeof(bus_options[0]))
@@ -1706,7 +1716,7 @@ usage()
 	warnx("    -R rotation");
 	warnx("    -C calibrate on start");
 	warnx("    -X only external bus");
-#if (PX4_I2C_BUS_ONBOARD || PX4_SPIDEV_HMC)
+#if (PX4_I2C_BUS_ONBOARD || PX4_SPIDEV_HMC || NAVSTIK_I2C_BUS_SENSORS || NAVSTIK_SPIDEV_HMC)
 	warnx("    -I only internal bus");
 #endif
 }
@@ -1727,7 +1737,7 @@ hmc5883_main(int argc, char *argv[])
 		case 'R':
 			rotation = (enum Rotation)atoi(optarg);
 			break;
-#if (PX4_I2C_BUS_ONBOARD || PX4_SPIDEV_HMC)
+#if (PX4_I2C_BUS_ONBOARD || PX4_SPIDEV_HMC || NAVSTIK_I2C_BUS_SENSORS || NAVSTIK_SPIDEV_HMC)
 		case 'I':
 			busid = HMC5883_BUS_I2C_INTERNAL;
 			break;

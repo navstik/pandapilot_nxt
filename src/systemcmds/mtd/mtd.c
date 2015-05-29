@@ -53,6 +53,7 @@
 
 #include <nuttx/spi.h>
 #include <nuttx/mtd.h>
+#include <nuttx/mmcsd.h>
 #include <nuttx/fs/nxffs.h>
 #include <nuttx/fs/ioctl.h>
 
@@ -170,7 +171,7 @@ static void
 ramtron_attach(void)
 {
 	/* find the right spi */
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+#if	defined(CONFIG_ARCH_BOARD_AEROCORE) || defined(CONFIG_ARCH_BOARD_NAVSTIK)
 	struct spi_dev_s *spi = up_spiinitialize(4);
 #else
 	struct spi_dev_s *spi = up_spiinitialize(2);
@@ -201,6 +202,13 @@ ramtron_attach(void)
 	/* if last attempt is still unsuccessful, abort */
 	if (mtd_dev == NULL)
 		errx(1, "failed to initialize mtd driver");
+
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	int result = mmcsd_spislotinitialize(CONFIG_NSH_MMCSDMINOR, CONFIG_NSH_MMCSDSLOTNO, spi);
+ 	if (result != OK) {
+		warnx("[boot] FAILED to bind SPI port 4 to the MMCSD driver\n");
+	}
+#endif
 
 	int ret = mtd_dev->ioctl(mtd_dev, MTDIOC_SETSPEED, (unsigned long)10*1000*1000);
 	if (ret != OK) {

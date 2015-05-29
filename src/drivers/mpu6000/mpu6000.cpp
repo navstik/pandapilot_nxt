@@ -177,6 +177,8 @@
 
 #ifdef PX4_SPI_BUS_EXT
 #define EXTERNAL_BUS PX4_SPI_BUS_EXT
+#elif  NAVSTIK_SPI_BUS_EXT_SENSORS
+#define EXTERNAL_BUS NAVSTIK_SPI_BUS_EXT_SENSORS
 #else
 #define EXTERNAL_BUS 0
 #endif
@@ -1944,11 +1946,17 @@ start(bool external_bus, enum Rotation rotation)
         if (external_bus) {
 #ifdef PX4_SPI_BUS_EXT
 		*g_dev_ptr = new MPU6000(PX4_SPI_BUS_EXT, path_accel, path_gyro, (spi_dev_e)PX4_SPIDEV_EXT_MPU, rotation);
+#elif	NAVSTIK_SPI_BUS_EXT_SENSORS
+		*g_dev_ptr = new MPU6000(NAVSTIK_SPI_BUS_EXT_SENSORS, path_accel, path_gyro, (spi_dev_e)NAVSTIK_SPIDEV_EXT_MPU, rotation);
 #else
 		errx(0, "External SPI not available");
 #endif
 	} else {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		*g_dev_ptr = new MPU6000(NAVSTIK_SPI_BUS_SENSORS, path_accel, path_gyro, (spi_dev_e)NAVSTIK_SPIDEV_MPU, rotation);
+#else
 		*g_dev_ptr = new MPU6000(PX4_SPI_BUS_SENSORS, path_accel, path_gyro, (spi_dev_e)PX4_SPIDEV_MPU, rotation);
+#endif
 	}
 
 	if (*g_dev_ptr == nullptr)

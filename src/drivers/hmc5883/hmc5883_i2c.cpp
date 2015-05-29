@@ -59,9 +59,13 @@
 
 #include "board_config.h"
 
-#ifdef PX4_I2C_OBDEV_HMC5883
+#if	defined(PX4_I2C_OBDEV_HMC5883) || defined(NAVSTIK_I2C_OBDEV_HMC5883)
 
+#ifdef NAVSTIK_I2C_OBDEV_HMC5883
+#define HMC5883L_ADDRESS		NAVSTIK_I2C_OBDEV_HMC5883
+#else
 #define HMC5883L_ADDRESS		PX4_I2C_OBDEV_HMC5883
+#endif
 
 device::Device *HMC5883_I2C_interface(int bus);
 
