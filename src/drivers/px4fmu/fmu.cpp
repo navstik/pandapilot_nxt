@@ -34,7 +34,7 @@
 /**
  * @file fmu.cpp
  *
- * Driver/configurator for the PX4 FMU multi-purpose port on v1 and v2 boards.
+ * Driver/configurator for the PX4 FMU multi-purpose port on v1, v2 and NAVSTIK NXT boards.
  */
 
 #include <px4_config.h>
@@ -98,6 +98,7 @@ public:
 		MODE_4PWM,
 		MODE_6PWM,
 		MODE_8PWM,
+		MODE_12PWM,
 	};
 	PX4FMU();
 	virtual ~PX4FMU();
@@ -123,6 +124,9 @@ private:
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 	static const unsigned _max_actuators = 8;
+#endif
+#if defined(CONFIG_ARCH_BOARD_NAVSTIK)
+	static const unsigned _max_actuators = 12;
 #endif
 
 	Mode		_mode;
@@ -223,6 +227,20 @@ const PX4FMU::GPIOConfig PX4FMU::_gpio_tab[] = {
 	/* AeroCore breaks out User GPIOs on J11 */
 	{GPIO_GPIO0_INPUT,       GPIO_GPIO0_OUTPUT,       0},
 	{GPIO_GPIO1_INPUT,       GPIO_GPIO1_OUTPUT,       0},
+	{GPIO_GPIO3_INPUT,       GPIO_GPIO3_OUTPUT,       0},
+	{GPIO_GPIO4_INPUT,       GPIO_GPIO4_OUTPUT,       0},
+	{GPIO_GPIO5_INPUT,       GPIO_GPIO5_OUTPUT,       0},
+	{GPIO_GPIO6_INPUT,       GPIO_GPIO6_OUTPUT,       0},
+	{GPIO_GPIO7_INPUT,       GPIO_GPIO7_OUTPUT,       0},
+	{GPIO_GPIO8_INPUT,       GPIO_GPIO8_OUTPUT,       0},
+	{GPIO_GPIO9_INPUT,       GPIO_GPIO9_OUTPUT,       0},
+	{GPIO_GPIO10_INPUT,      GPIO_GPIO10_OUTPUT,      0},
+	{GPIO_GPIO11_INPUT,      GPIO_GPIO11_OUTPUT,      0},
+#endif
+#if defined(CONFIG_ARCH_BOARD_NAVSTIK)
+	{GPIO_GPIO0_INPUT,       GPIO_GPIO0_OUTPUT,       0},
+	{GPIO_GPIO1_INPUT,       GPIO_GPIO1_OUTPUT,       0},
+	{GPIO_GPIO2_INPUT,       GPIO_GPIO2_OUTPUT,       0},
 	{GPIO_GPIO3_INPUT,       GPIO_GPIO3_OUTPUT,       0},
 	{GPIO_GPIO4_INPUT,       GPIO_GPIO4_OUTPUT,       0},
 	{GPIO_GPIO5_INPUT,       GPIO_GPIO5_OUTPUT,       0},
@@ -425,6 +443,20 @@ PX4FMU::set_mode(Mode mode)
 
 		/* XXX magic numbers */
 		up_pwm_servo_init(0xff);
+		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
+		break;
+#endif
+
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	case MODE_12PWM: // NAVSTIK NXT PWMs as 12 PWM outs
+		debug("MODE_12PWM");
+		/* default output rates */
+		_pwm_default_rate = 50;
+		_pwm_alt_rate = 50;
+		_pwm_alt_rate_channels = 0;
+
+		/* XXX magic numbers */
+		up_pwm_servo_init(0xfff);
 		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
 		break;
 #endif
@@ -658,6 +690,10 @@ PX4FMU::task_main()
 				case MODE_8PWM:
 					num_outputs = 8;
 					break;
+
+				case MODE_12PWM:
+					num_outputs = 12;
+					break;
 				default:
 					num_outputs = 0;
 					break;
@@ -814,6 +850,9 @@ PX4FMU::ioctl(file *filp, int cmd, unsigned long arg)
 	case MODE_6PWM:
 #ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case MODE_8PWM:
+#endif
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	case MODE_12PWM:
 #endif
 		ret = pwm_ioctl(filp, cmd, arg);
 		break;
@@ -1045,6 +1084,19 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 			break;
 		}
 
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	case PWM_SERVO_SET(11):
+	case PWM_SERVO_SET(10):
+	case PWM_SERVO_SET(9):
+	case PWM_SERVO_SET(8):
+	case PWM_SERVO_SET(7):
+	case PWM_SERVO_SET(6):
+		if (_mode < MODE_12PWM) {
+			ret = -EINVAL;
+			break;
+		}
+#endif
+
 #ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_SET(7):
 	case PWM_SERVO_SET(6):
@@ -1080,6 +1132,19 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 		}
 
 		break;
+
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	case PWM_SERVO_GET(11):
+	case PWM_SERVO_GET(10):
+	case PWM_SERVO_GET(9):
+	case PWM_SERVO_GET(8):
+	case PWM_SERVO_GET(7):
+	case PWM_SERVO_GET(6):
+		if (_mode < MODE_12PWM) {
+			ret = -EINVAL;
+			break;
+		}
+#endif
 
 #ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_GET(7):
@@ -1121,12 +1186,25 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 	case PWM_SERVO_GET_RATEGROUP(6):
 	case PWM_SERVO_GET_RATEGROUP(7):
 #endif
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	case PWM_SERVO_GET_RATEGROUP(6):
+	case PWM_SERVO_GET_RATEGROUP(7):
+	case PWM_SERVO_GET_RATEGROUP(8):
+	case PWM_SERVO_GET_RATEGROUP(9):
+	case PWM_SERVO_GET_RATEGROUP(10):
+	case PWM_SERVO_GET_RATEGROUP(11):
+#endif
 		*(uint32_t *)arg = up_pwm_servo_get_rate_group(cmd - PWM_SERVO_GET_RATEGROUP(0));
 		break;
 
 	case PWM_SERVO_GET_COUNT:
 	case MIXERIOCGETOUTPUTCOUNT:
 		switch (_mode) {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		case MODE_12PWM:
+			*(unsigned *)arg = 12;
+			break;
+#endif
 #ifdef CONFIG_ARCH_BOARD_AEROCORE
 		case MODE_8PWM:
 			*(unsigned *)arg = 8;
@@ -1181,6 +1259,11 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 		case 8:
 			set_mode(MODE_8PWM);
+			break;
+#endif
+#if defined(CONFIG_ARCH_BOARD_NAVSTIK)
+		case 12:
+			set_mode(MODE_12PWM);
 			break;
 #endif
 
@@ -1273,9 +1356,14 @@ PX4FMU::write(file *filp, const char *buffer, size_t len)
 	unsigned count = len / 2;
 	uint16_t values[6];
 
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+#if	defined(CONFIG_ARCH_BOARD_AEROCORE)
 	if (count > 8) {
 		// we have at most 8 outputs
+		count = 8;
+	}
+#elif defined(CONFIG_ARCH_BOARD_NAVSTIK)
+	if (count > 12) {
+		// we have at most 12 outputs
 		count = 8;
 	}
 #else
@@ -1590,6 +1678,9 @@ fmu_new_mode(PortMode new_mode)
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 		servo_mode = PX4FMU::MODE_8PWM;
+#endif
+#if defined(CONFIG_ARCH_BOARD_NAVSTIK)
+		servo_mode = PX4FMU::MODE_12PWM;
 #endif
 		break;
 
@@ -1973,7 +2064,7 @@ fmu_main(int argc, char *argv[])
 	fprintf(stderr, "FMU: unrecognised command %s, try:\n", verb);
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V1)
 	fprintf(stderr, "  mode_gpio, mode_serial, mode_pwm, mode_gpio_serial, mode_pwm_serial, mode_pwm_gpio, test, fake, sensor_reset, id\n");
-#elif defined(CONFIG_ARCH_BOARD_PX4FMU_V2) || defined(CONFIG_ARCH_BOARD_AEROCORE)
+#elif defined(CONFIG_ARCH_BOARD_PX4FMU_V2) || defined(CONFIG_ARCH_BOARD_AEROCORE) || defined(CONFIG_ARCH_BOARD_NAVSTIK)
 	fprintf(stderr, "  mode_gpio, mode_pwm, test, sensor_reset [milliseconds], i2c <bus> <hz>\n");
 #endif
 	exit(1);
