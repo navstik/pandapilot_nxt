@@ -212,9 +212,9 @@
 #define GPIO_UART7_RX	GPIO_UART7_RX_1
 #define GPIO_UART7_TX	GPIO_UART7_TX_1
 
-/* UART8 has no alternate pin config */
+/* UART8 has no alternate pin config 
 #define GPIO_UART8_RX	GPIO_UART8_RX
-#define GPIO_UART8_TX	GPIO_UART8_TX
+#define GPIO_UART8_TX	GPIO_UART8_TX*/
 
 /* UART RX DMA configurations */
 #define DMAMAP_USART1_RX DMAMAP_USART1_RX_2
