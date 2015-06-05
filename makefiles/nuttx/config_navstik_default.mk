@@ -74,7 +74,6 @@ MODULES		+= modules/mavlink
 #MODULES		+= modules/gpio_led
 #MODULES		+= modules/uavcan
 MODULES 	+= modules/land_detector
-MODULES 	+= modules/rtc
 
 #
 # Estimation modules (EKF/ SO3 / other filters)
