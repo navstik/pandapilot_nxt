@@ -1,6 +1,6 @@
 #!nsh
 #
-# Standard startup script for PX4FMU v1, v2, v3 onboard sensor drivers.
+# Standard startup script for PX4FMU v1, v2, v3, NAVSTIK NXT onboard sensor drivers.
 #
 
 if ms5611 start
@@ -67,9 +67,14 @@ then
 		fi
 	fi
 else
-	# FMUv1
-	if mpu6000 start
-	then
+	if ver hwcmp NAVSTIK
+	then 
+		mpu6000 -R 8 start
+	else
+		# FMUv1
+		if mpu6000 start
+		then
+		fi
 	fi
 
 	if l3gd20 start
@@ -79,8 +84,17 @@ else
 	# MAG selection
 	if param compare SENS_EXT_MAG 2
 	then
-		if hmc5883 -C -I start
+		if ver hwcmp NAVSTIK
 		then
+			# NAVSTIK NXT
+			if hmc5883 -C -I -R 14 start
+			then
+			fi
+		else
+			# FMUv1
+			if hmc5883 -C -I start
+			then
+			fi
 		fi
 	else
 		# Use only external as primary
@@ -96,6 +110,11 @@ else
 			fi
 		fi
 	fi
+fi
+
+if ver hwcmp NAVSTIK
+then 
+	bmp180 start
 fi
 
 if meas_airspeed start
