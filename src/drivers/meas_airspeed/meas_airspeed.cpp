@@ -589,7 +589,11 @@ meas_airspeed_usage()
 {
 	warnx("usage: meas_airspeed command [options]");
 	warnx("options:");
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	warnx("\t-b --bus i2cbus (%d)", NAVSTIK_I2C_BUS_SENSORS);
+#else
 	warnx("\t-b --bus i2cbus (%d)", PX4_I2C_BUS_DEFAULT);
+#endif
 	warnx("command:");
 	warnx("\tstart|stop|reset|test|info");
 }
@@ -597,7 +601,11 @@ meas_airspeed_usage()
 int
 meas_airspeed_main(int argc, char *argv[])
 {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	int i2c_bus = NAVSTIK_I2C_BUS_SENSORS;
+#else
 	int i2c_bus = PX4_I2C_BUS_DEFAULT;
+#endif
 
 	int i;
 

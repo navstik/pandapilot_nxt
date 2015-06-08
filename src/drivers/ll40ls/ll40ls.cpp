@@ -93,6 +93,26 @@ void	usage();
 void start(const bool use_i2c, const int bus)
 {
 	if (use_i2c) {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		/* create the driver, attempt expansion bus first */
+		if (bus == -1 || bus == NAVSTIK_I2C_BUS_GPS_1) {
+			if (g_dev_ext != nullptr) {
+				errx(0, "already started external");
+			}
+
+			g_dev_ext = new LidarLiteI2C(NAVSTIK_I2C_BUS_GPS_1, LL40LS_DEVICE_PATH_EXT);
+
+			if (g_dev_ext != nullptr && OK != g_dev_ext->init()) {
+				delete g_dev_ext;
+				g_dev_ext = nullptr;
+
+				if (bus == NAVSTIK_I2C_BUS_GPS_1) {
+					goto fail;
+				}
+			}
+		}
+
+#else
 		/* create the driver, attempt expansion bus first */
 		if (bus == -1 || bus == PX4_I2C_BUS_EXPANSION) {
 			if (g_dev_ext != nullptr) {
@@ -110,6 +130,7 @@ void start(const bool use_i2c, const int bus)
 				}
 			}
 		}
+#endif
 
 #ifdef PX4_I2C_BUS_ONBOARD
 
@@ -200,6 +221,12 @@ void start(const bool use_i2c, const int bus)
 
 fail:
 
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	if (g_dev_ext != nullptr && (bus == -1 || bus == NAVSTIK_I2C_BUS_GPS_1)) {
+		delete g_dev_ext;
+		g_dev_ext = nullptr;
+	}
+#else
 	if (g_dev_int != nullptr && (bus == -1 || bus == PX4_I2C_BUS_ONBOARD)) {
 		delete g_dev_int;
 		g_dev_int = nullptr;
@@ -209,6 +236,7 @@ fail:
 		delete g_dev_ext;
 		g_dev_ext = nullptr;
 	}
+#endif
 
 	errx(1, "driver start failed");
 }
@@ -218,7 +246,11 @@ fail:
  */
 void stop(const bool use_i2c, const int bus)
 {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	LidarLiteI2C **g_dev = (&g_dev_ext);
+#else
 	LidarLiteI2C **g_dev = (bus == PX4_I2C_BUS_ONBOARD ? &g_dev_int : &g_dev_ext);
+#endif
 
 	if (*g_dev != nullptr) {
 		delete *g_dev;
@@ -246,7 +278,11 @@ test(const bool use_i2c, const int bus)
 	const char *path;
 
 	if (use_i2c) {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		path = LL40LS_DEVICE_PATH_EXT;
+#else
 		path = ((bus == PX4_I2C_BUS_ONBOARD) ? LL40LS_DEVICE_PATH_INT : LL40LS_DEVICE_PATH_EXT);
+#endif
 
 	} else {
 		path = LL40LS_DEVICE_PATH_PWM;
@@ -317,7 +353,11 @@ reset(const bool use_i2c, const int bus)
 	const char *path;
 
 	if (use_i2c) {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		path = LL40LS_DEVICE_PATH_EXT;
+#else
 		path = ((bus == PX4_I2C_BUS_ONBOARD) ? LL40LS_DEVICE_PATH_INT : LL40LS_DEVICE_PATH_EXT);
+#endif
 
 	} else {
 		path = LL40LS_DEVICE_PATH_PWM;
@@ -349,7 +389,11 @@ info(const bool use_i2c, const int bus)
 	LidarLite *g_dev = nullptr;
 
 	if (use_i2c) {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+		g_dev = g_dev_ext;
+#else
 		g_dev = (bus == PX4_I2C_BUS_ONBOARD ? g_dev_int : g_dev_ext);
+#endif
 
 		if (g_dev == nullptr) {
 			errx(1, "driver not running");
@@ -371,7 +415,11 @@ info(const bool use_i2c, const int bus)
 void
 regdump(const bool use_i2c, const int bus)
 {
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+	LidarLiteI2C *g_dev = g_dev_ext;
+#else
 	LidarLiteI2C *g_dev = (bus == PX4_I2C_BUS_ONBOARD ? g_dev_int : g_dev_ext);
+#endif
 
 	if (g_dev == nullptr) {
 		errx(1, "driver not running");
@@ -412,7 +460,11 @@ ll40ls_main(int argc, char *argv[])
 #endif
 
 		case 'X':
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+			bus = NAVSTIK_I2C_BUS_GPS_1;
+#else
 			bus = PX4_I2C_BUS_EXPANSION;
+#endif
 			break;
 
 		default:
