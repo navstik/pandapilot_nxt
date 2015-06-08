@@ -114,7 +114,7 @@ fi
 
 if ver hwcmp NAVSTIK
 then 
-	bmp180 start
+	bmp280 start
 fi
 
 if meas_airspeed start
