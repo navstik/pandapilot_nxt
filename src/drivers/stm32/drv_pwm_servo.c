@@ -257,6 +257,12 @@ up_pwm_servo_get(unsigned channel)
 	case 4:
 		value = rCCR4(timer);
 		break;
+
+#ifdef	CONFIG_ARCH_BOARD_NAVSTIK
+	case 5:
+		value = rCCR1(timer);
+		break;
+#endif
 	}
 
 	return value + 1;
