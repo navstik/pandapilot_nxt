@@ -95,7 +95,7 @@
 #define I2C_ADDRESS_MS4525DO	0x28	/**< 7-bit address. Depends on the order code (this is for code "I") */
 #define PATH_MS4525		"/dev/ms4525"
 /* The MS5525DSO address is 111011Cx, where C is the complementary value of the pin CSB */
-#define I2C_ADDRESS_MS5525DSO	0x77	//0x77/* 7-bit address, addr. pin pulled low */
+#define I2C_ADDRESS_MS5525DSO	0x28	//0x77/* 7-bit address, addr. pin pulled low */	XXX Hotfix: One of the two available BMP280's has address 0x77.
 #define PATH_MS5525		"/dev/ms5525"
 
 /* Register address */
