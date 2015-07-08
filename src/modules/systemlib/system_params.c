@@ -71,8 +71,11 @@ PARAM_DEFINE_INT32(SYS_AUTOCONFIG, 0);
 * @max 1
 * @group System
 */
+#ifdef CONFIG_ARCH_BOARD_NAVSTIK
+PARAM_DEFINE_INT32(SYS_USE_IO, 0);
+#else
 PARAM_DEFINE_INT32(SYS_USE_IO, 1);
-
+#endif
 /**
 * Set restart type
 *
