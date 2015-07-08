@@ -491,7 +491,6 @@ BMP280::ioctl(struct file *filp, int cmd, unsigned long arg)
 
 					/* set interval for next measurement to minimum legal value */
 					_measure_ticks = USEC2TICK(_data.DELAY_PRESSURE);
-					warnx("\nmeasure ticks = %d",_measure_ticks);
 					/* if we need to start the poll state machine, do it */
 					if (want_start)
 						start();
