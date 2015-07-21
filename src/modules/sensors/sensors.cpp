@@ -1119,6 +1119,17 @@ Sensors::gyro_poll(struct sensor_combined_s &raw)
 		raw.timestamp = gyro_report.timestamp;
 		raw.gyro_errcount = gyro_report.error_count;
 		raw.gyro_temp = gyro_report.temperature;
+//                static double first = 0;
+//                static double second = 0;
+//                static int counter = 0;
+//                counter ++;
+//                if(counter == 1000){
+//                    counter = 0;
+//                    second = hrt_absolute_time();
+//                    printf("\ngyro0 poll rate\t\t %5.5lf",1000000000.0/(second - first));
+//                    fflush(stdout);
+//                    first = second;
+//                }
 	}
 
 	orb_check(_gyro1_sub, &gyro_updated);
@@ -2130,7 +2141,7 @@ Sensors::task_main()
 	orb_set_interval(_vcontrol_mode_sub, 200);
 
 	/* rate limit gyro to 250 Hz (the gyro signal is lowpassed accordingly earlier) */
-	orb_set_interval(_gyro_sub, 4);
+        orb_set_interval(_gyro_sub, 1);
 
 	/*
 	 * do advertisements

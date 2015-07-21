@@ -244,7 +244,7 @@ int attitude_estimator_ekf_thread_main(int argc, char *argv[])
 	/* subscribe to raw data */
 	int sub_raw = orb_subscribe(ORB_ID(sensor_combined));
 	/* rate-limit raw data updates to 333 Hz (sensors app publishes at 200, so this is just paranoid) */
-	orb_set_interval(sub_raw, 3);
+        orb_set_interval(sub_raw, 2);
 
 	/* subscribe to GPS */
 	int sub_gps = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -571,7 +571,17 @@ int attitude_estimator_ekf_thread_main(int argc, char *argv[])
 					memcpy(&att.R[0], &R.data[0][0], sizeof(att.R));
 					memcpy(&att.q[0],&q.data[0],sizeof(att.q));
 					att.R_valid = true;
-
+//                                        static double first = 0;
+//                                        static double second = 0;
+//                                        static int counter = 0;
+//                                        counter ++;
+//                                        if(counter == 1000){
+//                                            counter = 0;
+//                                            second = hrt_absolute_time();
+//                                            printf("\ngyro0 poll rate\t\t %5.5lf",1000000000.0/(second - first));
+//                                            fflush(stdout);
+//                                            first = second;
+//                                        }
 					if (PX4_ISFINITE(att.q[0]) && PX4_ISFINITE(att.q[1])
 						&& PX4_ISFINITE(att.q[2]) && PX4_ISFINITE(att.q[3])) {
 						// Broadcast
